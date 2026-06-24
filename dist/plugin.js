@@ -1,5 +1,5 @@
 // plugin.js (Main)
-exports.version = 0.5
+exports.version = 0.6
 exports.description = "Ultra lightweight request blocker based on an IP blocklist."
 exports.apiRequired = 4
 exports.repo = "feuerswut/hfs-ip-blocklist"
@@ -7,42 +7,43 @@ exports.author = "feuerswut"
 
 const path = require('path')
 const { Worker } = require('worker_threads')
-const PartitionManager = require('./partition-manager')
+const PartitionManager = require('./backend/partition-manager')
 
 exports.config = {
-    source: { 
-        type: 'select', 
+    source: {
+        type: 'select',
         defaultValue: 'url',
         options: { 'URL': 'url', 'File': 'file' },
-        label: "Blocklist Source"
+        label: "Blocklist Source",
+	$width: 4
     },
-    url: { 
-        type: 'string', 
+    url: {
+        type: 'string',
         defaultValue: '',
         label: "Blocklist URL"
     },
-    filePath: { 
-        type: 'string', 
+    filePath: {
+        type: 'string',
         defaultValue: '',
         label: "Blocklist File Path"
     },
-    refreshInterval: { 
-        type: 'number', 
+    refreshInterval: {
+        type: 'number',
         defaultValue: 86400,
         min: 3600,
         label: "Refresh Interval (seconds)"
     },
     partitionBits: {
         type: 'number',
-        defaultValue: 12,
-        min: 8,
+        defaultValue: 8,
+        min: 4,
         max: 16,
         label: "Partition Bits",
-        helperText: "/12 = 4096 partitions (recommended for RPi)"
+        helperText: "/12 = 4096 partitions"
     },
     maxCachePartitions: {
         type: 'number',
-        defaultValue: 50,
+        defaultValue: 20,
         min: 10,
         max: 200,
         label: "Max Cached Partitions"
@@ -114,7 +115,7 @@ exports.init = api => {
 
         debug('Starting worker thread...')
         
-        worker = new Worker(path.join(__dirname, 'worker.js'), {
+        worker = new Worker(path.join(__dirname, 'backend/worker.js'), {
             workerData: {
                 storageDir,
                 config: {
@@ -316,7 +317,3 @@ exports.init = api => {
     }
 }
 
-exports.configDialog = { 
-    maxWidth: 'lg',
-    sx: { '& .MuiTextField-root': { mb: 2 } }
-}
