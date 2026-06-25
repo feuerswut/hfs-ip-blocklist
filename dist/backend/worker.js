@@ -140,9 +140,17 @@ async function processBlocklist() {
 
         const adv = await loadAdvancedConfig()
 
-        const RoaringBitmap32 = loadRoaring()
-        const useRoaring = RoaringBitmap32 !== null && !adv.fallbackToBinarySearch
-        debug(useRoaring ? 'Using roaring bitmap (O(1) lookup)' : 'Roaring unavailable — using sorted ranges (binary search)')
+        const roaring = loadRoaring()
+        const useRoaring = roaring.cls !== null && !adv.fallbackToBinarySearch
+        if (useRoaring) {
+            log(`Roaring bitmap active [${roaring.source}] — O(1) IPv4 lookup`)
+            debug(`Binary: ${roaring.detail}`)
+        } else if (adv.fallbackToBinarySearch) {
+            log('Roaring disabled by config (fallbackToBinarySearch=true) — using sorted-ranges binary search')
+        } else {
+            log(`WARNING: Roaring bitmap unavailable — falling back to sorted-ranges binary search (slower). ${roaring.detail}`)
+        }
+        const RoaringBitmap32 = roaring.cls
 
         // ── Source ──
         progress('download', 0)

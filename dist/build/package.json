@@ -1,0 +1,8 @@
+{
+  "name": "hfs-ip-blocklist-native",
+  "private": true,
+  "description": "Run 'npm install' in this folder to compile the roaring bitmap native addon from source. Required only on platforms without a prebuilt binary (e.g. 32-bit ARM / Raspberry Pi).",
+  "dependencies": {
+    "roaring": "2.7.0"
+  }
+}

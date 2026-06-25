@@ -29,8 +29,7 @@ class BitmapStore {
             if (meta.format === 'roaring') {
                 const ok = await this._loadRoaring()
                 if (!ok) {
-                    // Roaring binary missing or ABI mismatch — try ranges fallback
-                    this.debug('Falling back to sorted-ranges lookup')
+                    this.debug('WARNING: Could not load roaring bitmap — falling back to sorted-ranges lookup (binary search)')
                     if (!await this._loadRanges()) return false
                 }
             } else {
@@ -50,12 +49,15 @@ class BitmapStore {
     async _loadRoaring() {
         const roarPath = path.join(this.storageDir, 'ipv4.roar')
         if (!fsSync.existsSync(roarPath)) return false
-        const RoaringBitmap32 = loadRoaring()
-        if (!RoaringBitmap32) return false
+        const roaring = loadRoaring()
+        if (!roaring.cls) {
+            this.debug(`WARNING: ipv4.roar exists but roaring is unavailable — ${roaring.detail}`)
+            return false
+        }
         try {
             const buf = await fs.readFile(roarPath)
-            this.bitmap = RoaringBitmap32.deserialize(buf, false)
-            this.debug(`IPv4 bitmap loaded (${(buf.length / 1024 / 1024).toFixed(1)} MB in RAM)`)
+            this.bitmap = roaring.cls.deserialize(buf, false)
+            this.debug(`IPv4 bitmap loaded via [${roaring.source}] (${(buf.length / 1024 / 1024).toFixed(1)} MB in RAM)`)
             return true
         } catch (err) {
             this.debug(`Roaring deserialize failed: ${err.message}`)
